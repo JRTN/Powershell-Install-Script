@@ -18,10 +18,13 @@
     
 ## File Descriptions   
 
-Install-Script.ps1 – This contains the actual script body. Reads the xml files and calls the appropriate functions from Installation-Functions.ps1 as defined by the xml
-Installation-Functions.ps1 – Wraps Installation-Framework.ps1 in PowerShell-style functions
-Installation-Framework.ps1 – Contains classes and methods for performing install tasks. These should not be called directly and instead wrapped in Installation-Functions.ps1
-Configuration Files – Contains install task definitions defined in xml
+**Install-Script.ps1** – This contains the actual script body. Reads the xml files and calls the appropriate functions from Installation-Functions.ps1 as defined by the xml
+
+**Installation-Functions.ps1** – Wraps Installation-Framework.ps1 in PowerShell-style functions
+
+**Installation-Framework.ps1** – Contains classes and methods for performing install tasks. These should not be called directly and instead wrapped in Installation-Functions.ps1
+
+**Configuration Files** – Contains install task definitions defined in xml
 
 ## Defining Configuration Files
 
