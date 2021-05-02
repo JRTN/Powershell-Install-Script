@@ -1,0 +1,151 @@
+<config name="master_config">
+    <task name="Cisco Umbrella">
+        <step name="Umbrella Installer">
+            <type>msi</type>
+            <target>\\psappw189\epmshare\Packages\Cisco\Umbrella\Windows\Setup.msi</target>
+            <arguments>
+                /quiet
+                /norestart
+            </arguments>
+        </step>
+    </task>
+    <task name="Install Fonts">
+        <step name="Copy Font Files">
+            <type>file_copy</type>
+            <target>\\fileshare\public\Fonts\*</target>
+            <destination>C:\Windows\Fonts</destination>
+        </step>
+    </task>
+    <task name="7-zip">
+        <step name="7-Zip Installer">
+            <type>executable</type>
+            <target>\\fileshare\John\Software\Install7zip.exe</target>
+            <arguments>
+                /S
+                /D="C:\Program Files\7-Zip"
+            </arguments>
+        </step>
+    </task>
+    <task name="Notepad++">
+        <step name="Notepad++ Installer">
+            <type>executable</type>
+            <target>\\fileshare\John\Software\InstallNotepad++.exe</target>
+            <arguments>
+                /S
+                /D="C:\Program Files\Notepad++"
+            </arguments>
+        </step>
+    </task>
+    <task name="VLC Media Player">
+        <step name="VLC Installer">
+            <type>executable</type>
+            <target>\\fileshare\John\Software\InstallVLC.exe</target>
+            <arguments>
+                /S
+                /L=1033
+            </arguments>
+        </step>
+    </task>
+    <task name="Adobe Reader">
+        <step name="Adobe Reader Installer">
+            <type>executable</type>
+            <target>\\fileshare\John\Software\InstallAdobeReader.exe</target>
+            <arguments>
+                /rs
+                /msi
+                /norestart
+                ALL_USERS=1
+                EULA_ACCEPT=YES
+                /qn
+            </arguments>
+        </step>
+    </task>
+    <task name="Firefox">
+        <step name="Firefox Installer">
+            <type>executable</type>
+            <target>\\fileshare\John\Software\InstallFirefoxESR.exe</target>
+            <arguments>
+                -ms
+            </arguments>
+        </step>
+    </task>
+    <task name="Edge Chromium">
+        <step name="Edge Installer">
+            <type>msi</type>
+            <target>\\fileshare\John\Software\exe\MicrosoftEdgeSetup.msi</target>
+            <arguments>
+                /quiet
+                /norestart
+            </arguments>
+        </step>
+    </task>
+    <task name="Java 1.8">
+        <step name="Java Installer">
+            <type>executable</type>
+            <target>\\fileshare\John\Software\InstallJDK8u121.exe</target>
+            <arguments>
+                /s
+                WEB_JAVA=1
+                SPONSORS=0
+            </arguments>
+        </step>
+    </task>
+    <task name="Cisco Jabber">
+        <step name="Jabber Installer">
+            <type>msi</type>
+            <target>\\fileshare\software\Cisco\Jabber\CiscoJabberSetup.msi</target>
+            <arguments>
+                /quiet
+                /norestart
+            </arguments>
+        </step>
+    </task>
+    <task name="Oracle 11g">
+        <step name="Copy Zipped File">
+            <type>file_copy</type>
+            <target>\\fileshare\software\Oracle\11g\win32_11gR2_client.zip</target>
+            <destination>$env:TEMP</destination>
+        </step>
+        <step name="Unzip File">
+            <type>file_expand</type>
+            <target>$env:TEMP\win32_11gR2_client.zip</target>
+            <destination>$env:TEMP\OracleInstallFiles</destination>
+        </step>
+        <step name="Oracle 11g Installer">
+            <type>executable</type>
+            <target>$env:TEMP\OracleInstallFiles\client\setup.exe</target>
+            <arguments>
+                -silent
+                -nowait
+                ORACLE_HOSTNAME=$env:COMPUTERNAME.domain.com
+                INVENTORY_LOCATION="C:\Program Files (x86)\Oracle\Inventory"
+                SELECTED_LANGUAGES=en
+                ORACLE_HOME=C:\Oracle\product\11.2.0\client_1
+                ORACLE_BASE=C:\Oracle
+                oracle.install.client.installType=Runtime
+                oracle.install.client.oramtsPortNumber=33333
+            </arguments>
+        </step>
+        <step name="Copy OID Files">
+            <type>file_copy</type>
+            <target>\\fileshare\software\Oracle\OID Files\*.ora</target>
+            <destination>C:\Oracle\product\11.2.0\client_1\network\admin</destination>
+        </step>
+        <step name="Delete Zip File">
+            <type>file_delete</type>
+            <target>$env:TEMP\win32_11gR2_client.zip</target>
+        </step>
+        <step name="Delete unzipped contents">
+            <type>folder_delete</type>
+            <target>$env:TEMP\OracleInstallFiles</target>
+        </step>
+    </task>
+    <task name="CSA">
+        <step name="Copy shortcut">
+            <type>file_copy</type>
+            <target>\\fileshare\csa_install.exe</target>
+            <destination>C:\Users\Public\Desktop</destination>
+        </step>
+    </task>
+
+</config>
