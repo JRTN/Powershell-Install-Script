@@ -171,10 +171,10 @@ Deletes a file
 Required tags:
 - target - The file which will be deleted
     
-    <step name="delete_file">
-        <type>file_delete</type>
-        <target>C:\Users\johrus2\Desktop\test.txt</target>
-    </step>
+        <step name="delete_file">
+            <type>file_delete</type>
+            <target>C:\Users\johrus2\Desktop\test.txt</target>
+        </step>
     
 
 **file_register**
@@ -184,10 +184,10 @@ Registers a given dll file
 Required tags:
 - target - The file which will be registered
     
-    <step name="register_file">
-        <type>file_register</type>
-        <target>C:\Users\johrus2\Desktop\test.dll</target>
-    </step>
+        <step name="register_file">
+            <type>file_register</type>
+            <target>C:\Users\johrus2\Desktop\test.dll</target>
+        </step>
     
 
 **folder_create**
@@ -212,10 +212,10 @@ Deletes a folder
 Required tags:
 - target - The path of the folder to be deleted
     
-    <step name="delete_folder">
-        <type>folder_delete</type>
-        <target>C:\Users\johrus2\Desktop\DeadFolder</target>
-    </step>
+        <step name="delete_folder">
+            <type>folder_delete</type>
+            <target>C:\Users\johrus2\Desktop\DeadFolder</target>
+        </step>
     
 
 **folder_move**
