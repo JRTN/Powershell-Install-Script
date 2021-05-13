@@ -1,4 +1,12 @@
-#Requires -RunAsAdministrator
+try {
+    #Begin script setup
+    $loggingFile = "$PSScriptRoot\Logging.ps1"
+    . $loggingFile
+} catch {
+    Write-Error -Message "Failed to import Logging functions. Ending Script.`n$($_.Message)" -ErrorAction Stop
+}
+
+$global:Logger = [PSLogger]::new("$PSScriptRoot\..\logs", "$($env:COMPUTERNAME)_Install_Script")
 
 #The different types of file operations which can be performed by a FileOperationStep
 enum FileMode {
@@ -9,6 +17,7 @@ enum FileMode {
     Link
     Expand
     Register
+    Font
 }
 
 #The different types of folder operations which can be performed by a FolderOperationStep
@@ -17,6 +26,7 @@ enum FolderMode {
     Move 
     Copy 
     Delete
+    Font
 }
 
 #Parent class to inherit from in order to create a step in the application install. 
@@ -57,6 +67,9 @@ class UserInformationStep : InstallStep {
     hidden [void] Init([string] $name, [string] $message) {
         $this.message   = $message
         $this.name      = $name
+
+        $global:Logger.Informational("Created $($this.toString())")
+
     }
 
     #Override
@@ -89,7 +102,7 @@ class FileOperationStep : InstallStep {
         $this.Init($name, $mode, $file, $destination, $content)
     }
 
-    #Delete/Register constructor
+    #Delete/Register/Font constructor
     FileOperationStep([string] $name, [FileMode] $mode, [string] $file) {
         $this.Init($name, $mode, $file, [string]::Empty, [string]::Empty)
     }
@@ -109,6 +122,7 @@ class FileOperationStep : InstallStep {
             #The following really shouldn't ever be used, instead call FileOperationStep(string, FileMode, string)
             ( [FileMode]::Delete   ) { $this.Init($name, $mode, $file, [string]::Empty, [string]::Empty); break }
             ( [FileMode]::Register ) { $this.Init($name, $mode, $file, [string]::Empty, [string]::Empty); break }
+            ( [FileMode]::Font     ) { $this.Init($name, $mode, $file, [string]::Empty, [string]::Empty); break }
 
             Default { $this.Init('Default file step', [FileMode]::Copy, [string]::Empty, [string]::Empty, [string]::Empty) }
         }
@@ -121,10 +135,12 @@ class FileOperationStep : InstallStep {
         $this.destination   = $destination
         $this.content       = $content
 
+        $global:Logger.Informational("Created $($this.toString())")
     }
 
     #Override
     [bool] Run() {
+        $global:Logger.Informational("Running $($this.toString())")
         $result = $true
         try {
             switch($this.mode) {
@@ -155,18 +171,39 @@ class FileOperationStep : InstallStep {
                     break
                 }
                 ([FileMode]::Register) {
-                    $exitCode = (Start-Process -FilePath 'regsvr32.exe' -ArgumentList "/s $($this.file)" -Wait:$true -PassThru:$true).ExitCode
+                    $registerExecutable = 'regsvr32.exe'
+                    $exitCode = (Start-Process -FilePath $registerExecutable -ArgumentList "/s $($this.file)" -Wait:$true -PassThru:$true).ExitCode
 
                     if( ($exitCode -ne 0) -and ($exitCode -ne 3010) ) {
                         $result = $false
+                        $global:Logger.Error("$registerExecutable exited with errors. Exit code [$exitCode]")
+                    } else {
+                        $global:Logger.Informational("$registerExecutable exited without error. Exit code [$exitCode]")
+                    }
+                    break
+                }
+                ([FileMode]::Font) {
+                    $MainDirectory = [System.IO.Path]::GetFullPath("$PSScriptRoot\..")
+                    $fontExecutable = "$MainDirectory\bin\fontutil.exe"
+                    $exitCode = (Start-Process -FilePath $fontExecutable -ArgumentList $this.file -Wait:$true -PassThru:$true).ExitCode
+
+                    if($exitCode -ne 0) {
+                        $result = $false
+                        $global:Logger.Error("$fontExecutable exited with errors. Exit code [$exitCode]")
+                        Write-Host $this.file -ForegroundColor Red
+                    } else {
+                        $global:Logger.Informational("$fontExecutable exited without error. Exit code [$exitCode] Args [$($this.file)]")
+                        Write-Host $this.file -ForegroundColor Green
                     }
                     break
                 }
                 Default {
+                    $global:Logger.Error("Unknown file operation mode encountered: $($this.mode)")
                     $result = $false
                 }
             }
         } catch {
+            $global:Logger.Error("File Operation Step failed: `n$($this.toString())`n$($_.Exception.Message)")
             $result = $false
         }
         return $result
@@ -188,7 +225,7 @@ class FolderOperationStep : InstallStep {
         throw("Default constructor for class FolderOperationStep cannot be called.")
     }
 
-    #Create/Delete constructor
+    #Create/Delete/Font constructor
     FolderOperationStep([string] $name, [FolderMode] $mode, [string] $folder) {
         $this.Init($name, $mode, $folder, [string]::Empty)
     }
@@ -203,10 +240,13 @@ class FolderOperationStep : InstallStep {
         $this.mode          = $mode
         $this.folder        = $folder
         $this.destination   = $destination
+
+        $global:Logger.Informational("Created $($this.toString())")
     }
 
     #Override
     [bool] Run() {
+        $global:Logger.Informational("Running $($this.toString())")
         $result = $true
             try {       
                 switch($this.mode) {
@@ -226,11 +266,28 @@ class FolderOperationStep : InstallStep {
                         Remove-Item -Path $this.folder -Force:$true -Recurse:$true
                         break
                     }
+                    ([FolderMode]::Font) {
+                        $MainDirectory = [System.IO.Path]::GetFullPath("$PSScriptRoot\..")
+                        $fontExecutable = "$MainDirectory\bin\fontutil.exe"
+                        $exitCode = (Start-Process -FilePath $fontExecutable -ArgumentList $this.folder -Wait:$true -PassThru:$true).ExitCode
+    
+                        if($exitCode -ne 0) {
+                            $result = $false
+                            $global:Logger.Error("$fontExecutable exited with errors. Exit code [$exitCode]")
+                            Write-Host $this.file -ForegroundColor Red
+                        } else {
+                            $global:Logger.Informational("$fontExecutable exited without error. Exit code [$exitCode] Args [$($this.folder)]")
+                            Write-Host $this.file -ForegroundColor Green
+                        }
+                        break
+                    }
                     Default {
+                        $global:Logger.Error("Unknown folder operation mode encountered: $($this.mode)")
                         $result = $false
                     }
                 }
             } catch {
+                $global:Logger.Error("Folder Operation Step failed: `n$($this.toString())`n$($_.Exception.Message)")
                 $result = $false
             }
         return $result
@@ -265,6 +322,7 @@ class ExecutableStep : InstallStep {
         $this.installer = $installer
         $this.arguments = $arguments
 
+        $global:Logger.Informational("Created $($this.toString())")
     }
 
     #Override
@@ -278,11 +336,11 @@ class ExecutableStep : InstallStep {
                 $exitCode = (Start-Process -FilePath $this.installer -ArgumentList $this.arguments -PassThru:$true -Wait:$true).ExitCode
             }
             if(($exitCode -ne 0) -and ($exitCode -ne 3010))  { #3010 is an acceptable error code; it just means you have to restart
-                Write-Host $exitCode -ForegroundColor Blue
+                $global:Logger.Error("$($this.installer) exited with errors. Exit code [$exitCode]")
                 $result = $false
             } 
         } catch {
-            Write-Host $_ -ForegroundColor Blue
+            $global:Logger.Error("Executable Step failed: `n$($this.toString())`n$($_.Exception.Message)")
             $result = $false
         }
         return $result
@@ -317,17 +375,21 @@ class MsiStep : InstallStep {
         $this.msi       = $msi
         $this.arguments = $arguments
 
+        $global:Logger.Informational("Created $($this.toString())")
     }
 
     #Override
     [bool] Run() {
         $result = $true
         try {
-            $exitCode = (Start-Process -FilePath 'msiexec.exe' -ArgumentList "/i `"$($this.msi)`" $($this.arguments)" -Wait:$true -PassThru:$true).ExitCode
+            $msiexec = 'msiexec.exe'
+            $exitCode = (Start-Process -FilePath $msiexec -ArgumentList "/i `"$($this.msi)`" $($this.arguments)" -Wait:$true -PassThru:$true).ExitCode
             if(($exitCode -ne 0) -and ($exitCode -ne 3010)) {
+                $global:Logger.Error("$msiexec exited with errors. Exit code [$exitCode]")
                 $result = $false
             } 
         } catch {
+            $global:Logger.Error("MsiExec Step failed: `n$($this.toString())`n$($_.Exception.Message)")
             $result = $false
         }
         return $result
@@ -336,45 +398,5 @@ class MsiStep : InstallStep {
     #Override
     [string] ToString() {
         return "MsiStep: NAME=$($this.name) MSI=$($this.msi) ARGUMENTS=$($this.arguments)"
-    }
-}
-
-#This is the definition of a complete installation task. An installation consists of a series of steps
-#executed one after the other. 
-class InstallTask {
-    [System.Collections.Generic.List[InstallStep]] $installSteps
-    [string] $name
-
-    InstallTask([string] $name) {
-        $this.Init($name)
-    }
-
-    hidden [void] Init($name) {
-        $this.name = $name
-        $this.installSteps = [System.Collections.Generic.List[InstallStep]]::new()
-    }
-
-    [void] AddStep([InstallStep] $step) {
-        $this.installSteps.Add($step)
-    }
-
-    [bool] Run() {
-        [bool] $result = $true
-
-        foreach($step in $this.installSteps) {
-            $stepResult = $step.Run()
-            $result = $result -and $stepResult
-
-            if(-not $result) {
-                break
-            }
-        }
-
-        return $result
-    }
-
-    #Override
-    [string] ToString() {
-        return "InstallTask: NAME=$($this.name) STEPS=$($this.installSteps)"
     }
 }

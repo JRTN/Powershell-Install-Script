@@ -1,0 +1,1 @@
+powershell -NoExit -ExecutionPolicy Bypass -File "%~dp0\script\Main.ps1"

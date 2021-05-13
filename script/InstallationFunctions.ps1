@@ -1,6 +1,6 @@
 try {
     #Begin script setup
-    $frameworkFile = "$PsScriptRoot\Installation-Framework.ps1"
+    $frameworkFile = "$PSScriptRoot\InstallationFramework.ps1"
     . $frameworkFile
 } catch {
     Write-Error -Message "Failed to import installation framework. Ending Script." -ErrorAction Stop
@@ -158,6 +158,21 @@ function New-FileRegisterStep {
     return $step
 }
 
+function New-FileFontStep {
+    param(
+        [Parameter(Mandatory)]
+        [ValidateNotNullOrEmpty()]
+        [string] $Name,
+        [Parameter(Mandatory)]
+        [ValidateNotNullOrEmpty()]
+        [string] $File
+    )
+
+    $step = [FileOperationStep]::new($Name, [FileMode]::Font, $File)
+
+    return $step
+}
+
 function New-FolderCreateStep {
     param(
         [Parameter(Mandatory)]
@@ -184,6 +199,21 @@ function New-FolderDeleteStep {
     )
 
     $step = [FolderOperationStep]::new($Name, [FolderMode]::Delete, $Folder)
+
+    return $step
+}
+
+function New-FolderFontStep {
+    param(
+        [Parameter(Mandatory)]
+        [ValidateNotNullOrEmpty()]
+        [string] $Name,
+        [Parameter(Mandatory)]
+        [ValidateNotNullOrEmpty()]
+        [string] $Folder
+    )
+
+    $step = [FolderOperationStep]::new($Name, [FolderMode]::Font, $Folder)
 
     return $step
 }
